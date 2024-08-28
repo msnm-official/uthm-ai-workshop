@@ -1,8 +1,4 @@
 % Title: Code for 2D PINN
-% Attempt: to execute Simplest Training by Airil
-% Created on: 30/03/2024 by Airil & Razin
-% Modified on: 30/03/2024 by Razin
-% Double checked on: 
 
 clear, clc, close all
 
@@ -92,7 +88,7 @@ for iteration = 1:500000
 
 end
 
-
+%% -------------------------
 %% VALIDATE RESULT
 
 % STEP 2 : Generate input [x,y]
