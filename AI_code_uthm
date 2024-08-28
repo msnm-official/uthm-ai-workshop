@@ -1,0 +1,128 @@
+% Title: Code for 2D PINN
+% Attempt: to execute Simplest Training by Airil
+% Created on: 30/03/2024 by Airil & Razin
+% Modified on: 30/03/2024 by Razin
+% Double checked on: 
+
+clear, clc, close all
+
+c1=3; c2=2; d1=2; d2=6;
+
+% STEP 1 : Generate inital Value for weight and biases
+M = 2;
+v = rand(2,M)-1/2;
+u = rand(1,M)-1/2;
+w = rand(2,M)-1/2;
+
+ER1 = []; %record error result
+for iteration = 1:500000
+
+    % STEP 2 : Generate input [x,y]
+    N = 1;
+    L = 1;
+    xk = (round(rand(1,N)*L,3));
+    yk = (round(rand(1,N)*L,3));
+
+    % STEP 3 : Calculate sigmoid function
+    z = [];
+    for j = 1:M %loop over neuron
+        zj = w(1,j)*xk + w(2,j)*yk + u(j);
+        z = cat(1,z,zj);
+    end
+    sig = 1 ./ (1 + exp(-z));
+    dsigdz = sig .* (1-sig);
+
+    % STEP 4 : Calculate neural network function
+    St = 0;
+    Tt = 0;
+    for j = 1:M %loop over neuron
+        St = St + v(1,j) *sig(j,:);
+        Tt = Tt + v(2,j) *sig(j,:);
+    end
+
+    % STEP 5 : Calculate the actual equations
+    s = c1*xk + c2*yk;
+    t = d1*xk + d2*yk;
+
+    % STEP 6 : Calculate the residual errors
+    E1 = (s - St);
+    E2 = (t - Tt);
+
+    % STEP 7 : Calculate the gradients
+    eta = 1e-2; %learning rate
+    for j = 1:M %loop over neuron
+
+        % diff over v1
+        dStdv1 = -sig(j,:);
+
+        % diff over v2
+        dTtdv2 = -sig(j,:);
+
+        % diff over u
+        dStdu = -v(1,j) *dsigdz(j,:);
+        dTtdu = -v(2,j) *dsigdz(j,:);
+
+        % diff over w1
+        dStdw1 = -v(1,j) *xk .*dsigdz(j,:);
+        dTtdw1 = -v(2,j) *xk .*dsigdz(j,:);
+
+        % diff over w2
+        dStdw2 = -v(1,j) *yk .*dsigdz(j,:);
+        dTtdw2 = -v(2,j) *yk .*dsigdz(j,:);
+
+        % STEP 8 : Update the weight and biases
+        v(1,j) = v(1,j) - eta*sum(2*E1.*dStdv1);
+        v(2,j) = v(2,j) - eta*sum(2*E2.*dTtdv2);
+        u(j)   = u(j)   - eta*sum(2*E1.*dStdu  + 2*E2.*dTtdu );
+        w(1,j) = w(1,j) - eta*sum(2*E1.*dStdw1 + 2*E2.*dTtdw1);
+        w(2,j) = w(2,j) - eta*sum(2*E1.*dStdw2 + 2*E2.*dTtdw2);
+
+    end
+
+    clc
+    fprintf('No.of iteration = %d\n\n',iteration)
+    disp('Matrix v1 v2 u w1 w2:')
+    disp([v;u;w])
+    fprintf('    s \t  St \t   E1  |   t      Tt      E2\n')
+    fprintf('%6.2f %6.2f %8.4f |%6.2f %6.2f %8.4f\n',[s;St;E1;t;Tt;E2])
+
+    Er1 = sqrt(sum(E1.^2 + E2.^2));
+    ER1 = cat(1,ER1,Er1);
+    fprintf('surd-G-squared error = %0.8f\n\n',Er1)
+
+end
+
+
+%% VALIDATE RESULT
+
+% STEP 2 : Generate input [x,y]
+xk = 0:0.1:1;
+yk = xk;
+
+% STEP 3 : Calculate sigmoid function
+z = [];
+for j = 1:M %loop over neuron
+    zj = w(1,j)*xk + w(2,j)*yk + u(j);
+    z = cat(1,z,zj);
+end
+sig = 1 ./ (1 + exp(-z));
+dsigdz = sig .* (1-sig);
+
+% STEP 4 : Calculate neural network function
+St = 0;
+Tt = 0;
+for j = 1:M %loop over neuron
+    St = St + v(1,j) *sig(j,:);
+    Tt = Tt + v(2,j) *sig(j,:);
+end
+
+% STEP 5 : Calculate the actual equations
+s = c1*xk + c2*yk;
+t = d1*xk + d2*yk;
+
+% STEP 6 : Calculate the residual errors
+E1 = (s - St);
+E2 = (t - Tt);
+
+fprintf('    s \t  St \t   E1  |   t      Tt      E2\n')
+fprintf('%6.2f %6.2f %8.4f |%6.2f %6.2f %8.4f\n',[s;St;E1;t;Tt;E2])
